@@ -59,13 +59,17 @@ def get_webpage_content(url):
 def extract_event_info(content):
     """Extract event information using OpenAI."""
     try:
-        openai.api_key = os.getenv("OPENAI_API_KEY")
-        if not openai.api_key:
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
             raise ValueError("OPENAI_API_KEY environment variable is not set")
+            
+        client = openai.OpenAI(api_key=api_key)
             
         prompt = f"""
         Please analyze the following event webpage content and extract the event details. Be precise and thorough.
-        YOU MUST FIND THE DATE AND TIME OF THE EVENT.  IT IS VERY IMPORTANT.
+        YOU MUST FIND THE DATE OF THE EVENT AND RETURN IT IN ISO 8601 FORMAT.  e.g 2024-04-10
+        YOU MUST FIND THE START TIME OF THE EVENT AND RETURN IT IN ISO 8601 FORMAT.  e.g 10:00:00
+        IT IS VERY IMPORTANT.
         If other information is not found, return "Not specified" for that field.
 
         Please return the information in this exact format:
@@ -91,7 +95,7 @@ def extract_event_info(content):
         """
         
         log("Sending request to OpenAI...", 'DEBUG')
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4",
             messages=[
                 {"role": "system", "content": "You are a precise event information extractor. Extract all details accurately, maintaining the exact format specified. Format the output cleanly with proper line breaks and bullet points.  Date and Time are very important.  The Date can appear on the webpage like: DayOfWeek, MonthName, Date. e.g Thursday, April 10"},
@@ -100,11 +104,10 @@ def extract_event_info(content):
             temperature=0,
             max_tokens=1000
         )
-        return response.choices[0].message['content']
+        return response.choices[0].message.content
     except Exception as e:
         log(f"Error with OpenAI API: {e}", 'ERROR')
-        sys.exit(1)
-
+        raise  # Re-raise the exception instead of calling sys.exit(1)
 
 def main():
     # Load environment variables
@@ -117,20 +120,24 @@ def main():
     
     url = sys.argv[1]
     
-    # Get webpage content
-    log("Fetching webpage content...", 'INFO')
-    content = get_webpage_content(url)
-    # Print results
-    print("\nWebpage Content:")
-    print("-" * 50)
-    print(content)
+    try:
+        # Get webpage content
+        log("Fetching webpage content...", 'INFO')
+        content = get_webpage_content(url)
+        # Print results
+        print("\nWebpage Content:")
+        print("-" * 50)
+        print(content)
 
-    # Extract event information
-    log("\nExtracting event information using GPT-4...", 'INFO')
-    event_info = extract_event_info(content)
-    print("\nEvent Information:")
-    print("-" * 50)
-    print(event_info)
+        # Extract event information
+        log("\nExtracting event information using GPT-4...", 'INFO')
+        event_info = extract_event_info(content)
+        print("\nEvent Information:")
+        print("-" * 50)
+        print(event_info)
+    except Exception as e:
+        log(f"Error: {e}", 'ERROR')
+        sys.exit(1)
 
 if __name__ == "__main__":
     main() 

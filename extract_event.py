@@ -5,6 +5,8 @@ from bs4 import BeautifulSoup
 import openai
 from dotenv import load_dotenv
 
+# DEPRECATED in favor of load_page.py
+
 # Logging levels
 LOG_LEVELS = {
     'DEBUG': 10,

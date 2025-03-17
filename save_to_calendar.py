@@ -59,6 +59,7 @@ def parse_datetime(date_str, time_str):
         
         # Parse time
         time_formats = [
+            "%H:%M:%S",
             "%I:%M %p",  # 7:00 PM
             "%H:%M"      # 19:00
         ]
@@ -110,8 +111,12 @@ def create_calendar_event(event_data):
         service = get_google_calendar_service()
         
         # Parse start and end times
+        print(f"Event start date: {event_data.get('Event Date')}")
+        print(f"Event start time: {event_data.get('Event Start Time')}")
         start_datetime = parse_datetime(event_data.get('Event Date'), 
                                      event_data.get('Event Start Time'))
+        print(f"Start datetime: {start_datetime}")
+
         end_datetime = parse_datetime(event_data.get('Event Date'), 
                                    event_data.get('Event End Time'))
         
@@ -141,7 +146,7 @@ def create_calendar_event(event_data):
         return event
         
     except Exception as e:
-        print(f"Error creating calendar event: {e}")
+        print(f"Error creating calendar event: {e}, {event_data}")
         return None
 
 def main():
